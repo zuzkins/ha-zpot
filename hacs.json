@@ -1,0 +1,8 @@
+{
+  "name": "ZPOT",
+  "content_in_root": false,
+  "country": ["CZ"],
+  "domains": ["sensor"],
+  "homeassistant": ">=2024.6.0",
+  "render_readme": true
+}

@@ -1,0 +1,14 @@
+{
+  "domain": "zpot",
+  "name": "ZPOT",
+  "codeowners": [
+    "@zuzkins"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/zuzkins/zpot-ha",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/zuzkins/zpot-ha/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

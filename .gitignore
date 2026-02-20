@@ -1,0 +1,36 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Test / coverage / typecheck
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+
+# Logs / local runtime
+*.log
+
+# Home Assistant local config/runtime (if used in this repo)
+config/
+.storage/
