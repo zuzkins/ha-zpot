@@ -119,25 +119,36 @@ def _select_current_segment(points: list[SegmentPoint]) -> SegmentPoint | None:
 
 
 class ZpotCurrentPriceSensor(CoordinatorEntity[ZpotCoordinator], SensorEntity):
-  """Single sensor with current value and full day datapoints in attributes."""
+  """Base sensor exposing current metric and timeline attributes."""
 
   _attr_has_entity_name = True
-  _attr_name = "Current price"
-  _attr_native_unit_of_measurement = "CZK/kWh"
-  _attr_icon = "mdi:cash-multiple"
   _attr_force_update = True
 
-  def __init__(self, coordinator: ZpotCoordinator, entry_id: str) -> None:
+  def __init__(
+    self,
+    coordinator: ZpotCoordinator,
+    entry_id: str,
+    *,
+    metric_key: str,
+    name: str,
+    unit: str,
+    icon: str,
+  ) -> None:
     super().__init__(coordinator)
-    self._attr_unique_id = f"{entry_id}_current_price"
+    self._metric_key = metric_key
+    self._attr_name = name
+    self._attr_native_unit_of_measurement = unit
+    self._attr_icon = icon
+    self._attr_unique_id = f"{entry_id}_{metric_key}"
     self._unsub_boundary: Any = None
 
   async def async_added_to_hass(self) -> None:
     await super().async_added_to_hass()
-    self._schedule_next_boundary_refresh()
+    if self._metric_key == "total":
+      self._schedule_next_boundary_refresh()
 
   async def async_will_remove_from_hass(self) -> None:
-    if self._unsub_boundary is not None:
+    if self._metric_key == "total" and self._unsub_boundary is not None:
       self._unsub_boundary()
       self._unsub_boundary = None
     await super().async_will_remove_from_hass()
@@ -185,7 +196,10 @@ class ZpotCurrentPriceSensor(CoordinatorEntity[ZpotCoordinator], SensorEntity):
   @property
   def native_value(self) -> float | None:
     current = self._current()
-    return current.total if current else None
+    if current is None:
+      return None
+    value = getattr(current, self._metric_key)
+    return value if isinstance(value, float) else None
 
   @property
   def extra_state_attributes(self) -> dict[str, Any]:
@@ -203,7 +217,9 @@ class ZpotCurrentPriceSensor(CoordinatorEntity[ZpotCoordinator], SensorEntity):
         point.minute,
         tzinfo=local_tz,
       ).isoformat()
-      attrs[key] = point.total
+      value = getattr(point, self._metric_key)
+      if isinstance(value, float):
+        attrs[key] = value
     return attrs
 
 
@@ -214,4 +230,63 @@ async def async_setup_entry(
 ) -> None:
   data = hass.data[DOMAIN][entry.entry_id]
   coordinator: ZpotCoordinator = data[DATA_COORDINATOR]
-  async_add_entities([ZpotCurrentPriceSensor(coordinator, entry.entry_id)])
+  async_add_entities(
+    [
+      ZpotCurrentPriceSensor(
+        coordinator,
+        entry.entry_id,
+        metric_key="total",
+        name="Current price",
+        unit="CZK/kWh",
+        icon="mdi:cash-multiple",
+      ),
+      ZpotCurrentPriceSensor(
+        coordinator,
+        entry.entry_id,
+        metric_key="spot",
+        name="Current spot price",
+        unit="CZK/kWh",
+        icon="mdi:flash",
+      ),
+      ZpotCurrentPriceSensor(
+        coordinator,
+        entry.entry_id,
+        metric_key="service",
+        name="Current service fee",
+        unit="CZK/kWh",
+        icon="mdi:hand-coin",
+      ),
+      ZpotCurrentPriceSensor(
+        coordinator,
+        entry.entry_id,
+        metric_key="distribution",
+        name="Current distribution fee",
+        unit="CZK/kWh",
+        icon="mdi:transmission-tower",
+      ),
+      ZpotCurrentPriceSensor(
+        coordinator,
+        entry.entry_id,
+        metric_key="vat",
+        name="Current VAT",
+        unit="CZK/kWh",
+        icon="mdi:percent-box",
+      ),
+      ZpotCurrentPriceSensor(
+        coordinator,
+        entry.entry_id,
+        metric_key="price_czk",
+        name="Current raw CZK price",
+        unit="CZK/kWh",
+        icon="mdi:currency-czk",
+      ),
+      ZpotCurrentPriceSensor(
+        coordinator,
+        entry.entry_id,
+        metric_key="price_eur",
+        name="Current raw EUR price",
+        unit="EUR/kWh",
+        icon="mdi:currency-eur",
+      ),
+    ]
+  )

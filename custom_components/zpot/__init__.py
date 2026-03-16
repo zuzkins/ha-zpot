@@ -45,6 +45,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ZpotConfigEntry) -> bool
 
 async def async_unload_entry(hass: HomeAssistant, entry: ZpotConfigEntry) -> bool:
   """Unload a config entry."""
+  if domain_data := hass.data.get(DOMAIN, {}).get(entry.entry_id):
+    coordinator: ZpotCoordinator = domain_data[DATA_COORDINATOR]
+    await coordinator.async_shutdown()
+
   unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
   if unload_ok:
     hass.data[DOMAIN].pop(entry.entry_id)
